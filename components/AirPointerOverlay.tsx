@@ -115,15 +115,34 @@ export function AirPointerOverlay({ isSimulation, realFrame, homography, onSelec
     const stage = stageRef.current;
     if (!stage) return;
     const rect = stage.getBoundingClientRect();
-    const next = {
+    let next = {
       x: Math.min(1, Math.max(0, filtered.x)) * rect.width,
       y: Math.min(1, Math.max(0, filtered.y)) * rect.height,
     };
+
+    // ── TNI Magnetic Snapping (80 px radius) ──
+    const stageRect = stage.getBoundingClientRect();
+    for (const el of targetRefs.current) {
+      if (!el) continue;
+      const r = el.getBoundingClientRect();
+      const cx = (r.left - stageRect.left) + r.width / 2;
+      const cy = (r.top - stageRect.top) + r.height / 2;
+      const dist = Math.hypot(next.x - cx, next.y - cy);
+      if (dist < 80) {
+        // Soft magnetic snap towards center of target
+        const factor = (80 - dist) / 80;
+        next = {
+          x: next.x * (1 - factor * 0.7) + cx * (factor * 0.7),
+          y: next.y * (1 - factor * 0.7) + cy * (factor * 0.7),
+        };
+        break;
+      }
+    }
+
     cursorPxRef.current = next;
     setCursorPx(next);
 
     // Dwell targeting — find which target the cursor hovers over
-    const stageRect = stage.getBoundingClientRect();
     const hoveredIdx = targetRefs.current.findIndex((el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -445,17 +464,44 @@ export function AirPointerOverlay({ isSimulation, realFrame, homography, onSelec
             </div>
           )}
 
-          {/* Cursor dot */}
+          {/* TNI Baguette Virtuelle / Halo Laser Géant (70px) */}
           {cursorPx && !paused && (
             <div
-              className="pointer-events-none absolute z-10 h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 shadow-[0_0_12px_rgba(110,231,242,0.6)] transition-[border-color,background-color] duration-100"
+              className="pointer-events-none absolute z-20 flex items-center justify-center -translate-x-1/2 -translate-y-1/2 transition-[border-color,background-color] duration-75"
               style={{
                 left: cursorPx.x,
                 top: cursorPx.y,
-                borderColor: frame.pinchActive ? "var(--edu-good)" : "var(--edu-accent)",
-                background: frame.pinchActive ? "rgba(74,222,128,0.35)" : "rgba(110,231,242,0.2)",
+                width: "70px",
+                height: "70px",
               }}
-            />
+            >
+              {/* Outer halo */}
+              <div
+                className="absolute inset-0 rounded-full animate-pulse opacity-60"
+                style={{
+                  border: frame.pinchActive ? "2px solid var(--edu-good)" : "2px dashed var(--edu-accent)",
+                  boxShadow: frame.pinchActive
+                    ? "0 0 25px rgba(74,222,128,0.7)"
+                    : "0 0 20px rgba(110,231,242,0.5)",
+                }}
+              />
+              {/* Mid disc */}
+              <div
+                className="absolute h-8 w-8 rounded-full border-2 transition-all"
+                style={{
+                  borderColor: frame.pinchActive ? "var(--edu-good)" : "var(--edu-accent)",
+                  background: frame.pinchActive ? "rgba(74,222,128,0.4)" : "rgba(110,231,242,0.25)",
+                }}
+              />
+              {/* Inner laser pinpoint */}
+              <div
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  background: frame.pinchActive ? "#ffffff" : "var(--edu-accent)",
+                  boxShadow: "0 0 8px #ffffff",
+                }}
+              />
+            </div>
           )}
 
           {paused && (

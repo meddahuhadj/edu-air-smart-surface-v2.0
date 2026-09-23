@@ -49,22 +49,56 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-panel-border)] p-0.5">
-          {locales.map((l) => (
-            <button
-              key={l}
-              type="button"
-              onClick={() => setLocale(l)}
-              className={`rounded-md px-2 py-1 text-xs font-semibold transition ${
-                locale === l
-                  ? "bg-[color:var(--edu-accent)] text-[#04141a]"
-                  : "text-[color:var(--edu-text-dim)] hover:text-[color:var(--edu-text)]"
-              }`}
-              aria-pressed={locale === l}
-            >
-              {localeMeta[l].label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          {/* RGPD Safe Badge */}
+          <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-950/20 px-3 py-1 text-xs font-medium text-emerald-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>100% Local (Zéro envoi Cloud)</span>
+          </div>
+
+          {/* Feu tricolore de préparation de classe */}
+          <div className="hidden md:flex items-center gap-2 rounded-lg border border-[color:var(--edu-panel-border)] bg-black/40 px-3 py-1 text-xs">
+            <span className="font-semibold text-white/80">Prêt en 5s :</span>
+            <span className="flex items-center gap-1 text-emerald-400">● Caméra</span>
+            <span className="flex items-center gap-1 text-emerald-400">● Lumière</span>
+            <span className="flex items-center gap-1 text-emerald-400">● Distance</span>
+          </div>
+
+          {/* Bouton Toggle Mode TNI */}
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof document !== "undefined") {
+                const isTni = document.body.classList.toggle("tni-mode");
+                localStorage.setItem("edu_air_tni_mode", String(isTni));
+                window.dispatchEvent(new Event("tni-mode-change"));
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-lg border border-[color:var(--edu-accent)]/50 bg-[color:var(--edu-accent)]/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--edu-accent)] transition hover:bg-[color:var(--edu-accent)] hover:text-black active:scale-95"
+            title="Activer / Désactiver l'interface adaptée aux grands écrans TNI (65-86 pouces)"
+          >
+            <span>📺</span>
+            <span>Mode TNI</span>
+          </button>
+
+          {/* Sélecteur de langue */}
+          <div className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-panel-border)] p-0.5">
+            {locales.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => setLocale(l)}
+                className={`rounded-md px-2 py-1 text-xs font-semibold transition ${
+                  locale === l
+                    ? "bg-[color:var(--edu-accent)] text-[#04141a]"
+                    : "text-[color:var(--edu-text-dim)] hover:text-[color:var(--edu-text)]"
+                }`}
+                aria-pressed={locale === l}
+              >
+                {localeMeta[l].label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

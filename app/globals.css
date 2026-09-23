@@ -71,3 +71,84 @@ body {
 .pulse {
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
+
+/* ============================================================
+   TNI MODE (Tableau Numérique Interactif 65-86")
+   Optimized for large touch displays, stylus, standing 1-3m, no-hover
+   ============================================================ */
+.tni-mode {
+  --tni-scale: 1.2;
+}
+
+.tni-mode button,
+.tni-mode .touch-target {
+  min-height: 64px !important;
+  min-width: 64px !important;
+  font-size: 1.15rem !important;
+  border-width: 2px !important;
+}
+
+.tni-mode .text-sm {
+  font-size: 1.1rem !important;
+  line-height: 1.6 !important;
+}
+
+.tni-mode .text-xs {
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
+}
+
+.tni-mode .text-lg {
+  font-size: 1.6rem !important;
+}
+
+.tni-mode .text-xl {
+  font-size: 2rem !important;
+}
+
+.tni-mode .text-2xl {
+  font-size: 2.6rem !important;
+}
+
+/* TNI High-Contrast Active States */
+.tni-mode button:active,
+.tni-mode .touch-target:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 20px rgba(110, 231, 242, 0.5) !important;
+}
+
+/* 4 Quadrants Fullscreen Quiz for TNI */
+.tni-quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1.25rem;
+  width: 100%;
+  height: calc(100vh - 280px);
+  min-height: 480px;
+}
+
+.tni-quadrant-btn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  font-size: 1.85rem !important;
+  font-weight: 700 !important;
+  border: 3px solid rgba(255, 255, 255, 0.18);
+  background: rgba(15, 23, 42, 0.7);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.tni-quadrant-btn:active,
+.tni-quadrant-btn.selected {
+  border-color: var(--edu-accent) !important;
+  background: rgba(110, 231, 242, 0.22) !important;
+  box-shadow: 0 0 30px rgba(110, 231, 242, 0.45);
+}
+

@@ -197,6 +197,28 @@ export function Air3DViewer({ isSimulation, realFrame, onManipulate }: Air3DView
               {t("gesture.pinch")}
             </div>
           )}
+
+          {/* Educational Part Info Overlay Banner */}
+          {isolated && (
+            <div className="pointer-events-auto absolute bottom-3 left-3 right-16 rounded-xl border border-[color:var(--edu-accent)]/50 bg-[#070d18]/90 p-3 text-xs backdrop-blur shadow-lg">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[color:var(--edu-accent)] flex items-center gap-1.5">
+                  ℹ️ {parts.find((p) => p.id === isolated)?.labelKey ? t(parts.find((p) => p.id === isolated)!.labelKey) : isolated}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsolated(null)}
+                  className="text-slate-400 hover:text-white text-[11px]"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-slate-300">
+                {t("scene3d.partInfo.desc")}
+              </p>
+            </div>
+          )}
+
           {/* Action bar on the canvas */}
           <div className="pointer-events-auto absolute bottom-3 right-3 flex flex-col gap-1.5">
             <button

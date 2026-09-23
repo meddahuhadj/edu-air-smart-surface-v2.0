@@ -17,10 +17,12 @@ export interface ClassroomSessionState {
   step: ClassroomStep;
   interactionMode: InteractionMode;
   isSimulation: boolean;
+  isTniMode: boolean;
   report: SessionReport | null;
   begin: () => void;
   finishCalibration: () => void;
   setInteractionMode: (mode: InteractionMode) => void;
+  toggleTniMode: () => void;
   registerClick: () => void;
   registerStroke: () => void;
   register3D: () => void;
@@ -37,7 +39,23 @@ export function useClassroomSession(): ClassroomSessionState {
   const [step, setStep] = useState<ClassroomStep>("idle");
   const [interactionMode, setInteractionModeState] = useState<InteractionMode>("pointer");
   const [isSimulation, setIsSimulation] = useState(false);
+  const [isTniMode, setIsTniMode] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("edu_air_tni_mode") === "true";
+    }
+    return false;
+  });
   const [report, setReport] = useState<SessionReport | null>(null);
+
+  const toggleTniMode = useCallback(() => {
+    setIsTniMode((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("edu_air_tni_mode", String(next));
+      }
+      return next;
+    });
+  }, []);
 
   const startedAtRef = useRef<number | null>(null);
   const clicksRef = useRef(0);
@@ -115,10 +133,12 @@ export function useClassroomSession(): ClassroomSessionState {
     step,
     interactionMode,
     isSimulation,
+    isTniMode,
     report,
     begin,
     finishCalibration,
     setInteractionMode,
+    toggleTniMode,
     registerClick,
     registerStroke,
     register3D,

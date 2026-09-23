@@ -73,8 +73,11 @@ export function AirDrawCanvas({ isSimulation, realFrame, homography, onStroke }:
   const [tool, setTool] = useState<BoardTool>("pen");
   const [background, setBackground] = useState<BoardBackground>("whiteboard");
   const [color, setColor] = useState(COLORS[0]);
+  const [showRuler, setShowRuler] = useState(false);
+  const [showProtractor, setShowProtractor] = useState(false);
   const [thickness, setThickness] = useState(THICKNESSES[1]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [palettePosition, setPalettePosition] = useState<"top" | "left" | "right">("top");
   const [explainToast, setExplainToast] = useState(false);
   const [, forceRender] = useState(0);
 
@@ -278,7 +281,71 @@ export function AirDrawCanvas({ isSimulation, realFrame, homography, onStroke }:
       ctx.fill();
       ctx.restore();
     }
-  }, [background, tool]);
+
+    // 5. Render Ruler Overlay if enabled
+    if (showRuler) {
+      ctx.save();
+      ctx.fillStyle = "rgba(15, 23, 42, 0.45)";
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      const rx = w * 0.15;
+      const ry = h * 0.45;
+      const rw = w * 0.7;
+      const rh = 50;
+      ctx.fillRect(rx, ry, rw, rh);
+      ctx.strokeRect(rx, ry, rw, rh);
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.font = "10px monospace";
+      const numMarks = 30;
+      for (let i = 0; i <= numMarks; i++) {
+        const mx = rx + (rw / numMarks) * i;
+        const isMajor = i % 5 === 0;
+        const tickH = isMajor ? 16 : 8;
+        ctx.beginPath();
+        ctx.moveTo(mx, ry);
+        ctx.lineTo(mx, ry + tickH);
+        ctx.stroke();
+        if (isMajor) ctx.fillText(`${i}`, mx - 4, ry + 32);
+      }
+      ctx.restore();
+    }
+
+    // 6. Render Protractor Overlay if enabled
+    if (showProtractor) {
+      ctx.save();
+      const pcx = w / 2;
+      const pcy = h * 0.7;
+      const pr = Math.min(w, h) * 0.35;
+
+      ctx.fillStyle = "rgba(15, 23, 42, 0.45)";
+      ctx.strokeStyle = "#38bdf8";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(pcx, pcy, pr, Math.PI, 0, false);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = "9px monospace";
+      ctx.fillStyle = "#38bdf8";
+      for (let deg = 0; deg <= 180; deg += 10) {
+        const rad = (deg * Math.PI) / 180;
+        const tx1 = pcx - Math.cos(rad) * pr;
+        const ty1 = pcy - Math.sin(rad) * pr;
+        const tx2 = pcx - Math.cos(rad) * (pr - (deg % 30 === 0 ? 14 : 8));
+        const ty2 = pcy - Math.sin(rad) * (pr - (deg % 30 === 0 ? 14 : 8));
+        ctx.beginPath();
+        ctx.moveTo(tx1, ty1);
+        ctx.lineTo(tx2, ty2);
+        ctx.stroke();
+        if (deg % 30 === 0) {
+          ctx.fillText(`${deg}°`, tx2 - 8, ty2 + 4);
+        }
+      }
+      ctx.restore();
+    }
+  }, [background, tool, showRuler, showProtractor]);
 
   useEffect(() => {
     redraw();
@@ -483,6 +550,59 @@ export function AirDrawCanvas({ isSimulation, realFrame, homography, onStroke }:
           ))}
         </div>
 
+        {/* Math & Measurement Tools */}
+        <div className="flex items-center gap-1.5 border-l border-[color:var(--edu-panel-border)] pl-2">
+          <button
+            type="button"
+            onClick={() => setShowRuler(!showRuler)}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              showRuler
+                ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
+                : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
+            }`}
+            title="Règle graduée"
+          >
+            <span>📏</span>
+            <span className="hidden md:inline">Règle</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowProtractor(!showProtractor)}
+            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              showProtractor
+                ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
+                : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
+            }`}
+            title="Rapporteur 180°"
+          >
+            <span>📐</span>
+            <span className="hidden md:inline">Rapporteur</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const points: { x: number; y: number }[] = [];
+              for (let i = 0; i <= 100; i++) {
+                const nx = i / 100;
+                const x = (nx - 0.5) * 4 * Math.PI;
+                const ny = 0.5 - Math.sin(x) * 0.25;
+                points.push({ x: nx, y: ny });
+              }
+              const newStroke: Stroke = { tool: "pen", points, color, thickness, erase: false };
+              const pages = [...pagesRef.current];
+              pages[pageIndexRef.current] = [...pages[pageIndexRef.current], newStroke];
+              pagesRef.current = pages;
+              onStroke();
+              redraw();
+            }}
+            className="flex items-center gap-1 rounded-lg border border-purple-500/40 bg-purple-500/10 px-2.5 py-1.5 text-xs font-semibold text-purple-300 transition hover:bg-purple-500/20"
+            title="Tracer sin(x)"
+          >
+            <span>📈</span>
+            <span className="hidden md:inline">f(x)=sin(x)</span>
+          </button>
+        </div>
+
         {/* Fullscreen & Export */}
         <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-2">
           <button
@@ -503,6 +623,41 @@ export function AirDrawCanvas({ isSimulation, realFrame, homography, onStroke }:
             <span>{isFullscreen ? "🗗" : "⛶"}</span>
             <span className="hidden sm:inline">{t("draw.fullscreen")}</span>
           </button>
+
+          {/* TNI Lateral Dock Toggle */}
+          <div className="flex items-center gap-1 border-l border-[color:var(--edu-panel-border)] pl-2">
+            <span className="text-[10px] text-slate-400 font-bold uppercase hidden lg:inline">Ancrage TNI:</span>
+            <button
+              type="button"
+              onClick={() => setPalettePosition("left")}
+              className={`rounded px-1.5 py-1 text-xs font-bold ${
+                palettePosition === "left" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+              }`}
+              title="Ancrer la palette à gauche (idéal enseignant droitier face aux élèves)"
+            >
+              ◀ G
+            </button>
+            <button
+              type="button"
+              onClick={() => setPalettePosition("top")}
+              className={`rounded px-1.5 py-1 text-xs font-bold ${
+                palettePosition === "top" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+              }`}
+              title="Ancrer la palette en haut"
+            >
+              ▲ H
+            </button>
+            <button
+              type="button"
+              onClick={() => setPalettePosition("right")}
+              className={`rounded px-1.5 py-1 text-xs font-bold ${
+                palettePosition === "right" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+              }`}
+              title="Ancrer la palette à droite (idéal enseignant gaucher)"
+            >
+              D ▶
+            </button>
+          </div>
         </div>
       </div>
 

@@ -274,6 +274,40 @@ function buildPlantCell() {
   return { group, parts };
 }
 
+// --- Biology: Leaf Cell & Photosynthesis ------------------------------------
+function buildLeafCell() {
+  const group = new THREE.Group();
+
+  const upperCuticle = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 0.1, 1.0),
+    new THREE.MeshStandardMaterial({ color: 0x84cc16, transparent: true, opacity: 0.5 }),
+  );
+  upperCuticle.position.set(0, 0.5, 0);
+
+  const palisadeCells = new THREE.Group();
+  for (let i = -2; i <= 2; i++) {
+    const cell = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.12, 0.6, 16),
+      new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.3 }),
+    );
+    cell.position.set(i * 0.3, 0.1, 0);
+    palisadeCells.add(cell);
+  }
+
+  const stomata = sphere(0.15, 0xeab308);
+  stomata.position.set(0, -0.5, 0);
+
+  group.add(upperCuticle, palisadeCells, stomata);
+
+  const parts: Object3DPart[] = [
+    part("upperCuticle", "scene3d.part.upperCuticle", upperCuticle, new THREE.Vector3(0, 1, 0)),
+    part("palisadeLayer", "scene3d.part.palisadeLayer", palisadeCells, new THREE.Vector3(0, 0.5, 0)),
+    part("stomata", "scene3d.part.stomata", stomata, new THREE.Vector3(0, -1, 0)),
+  ];
+
+  return { group, parts };
+}
+
 // --- Anatomy: Respiratory System & Lungs -------------------------------------
 function buildLungs() {
   const group = new THREE.Group();
@@ -385,6 +419,35 @@ function buildBohrAtom() {
   return { group, parts };
 }
 
+// --- Physics: Convex Lens --------------------------------------------------
+function buildConvexLens() {
+  const group = new THREE.Group();
+
+  const lensMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(0.8, 32, 16),
+    new THREE.MeshStandardMaterial({ color: 0xe0f2fe, transparent: true, opacity: 0.5, roughness: 0.1 }),
+  );
+  lensMesh.scale.set(0.2, 1.2, 1.2);
+
+  const axis = bond(new THREE.Vector3(-1.8, 0, 0), new THREE.Vector3(1.8, 0, 0), 0.015, 0x94a3b8);
+
+  const focalPoint1 = sphere(0.06, 0xef4444);
+  focalPoint1.position.set(-0.8, 0, 0);
+
+  const focalPoint2 = sphere(0.06, 0xef4444);
+  focalPoint2.position.set(0.8, 0, 0);
+
+  group.add(lensMesh, axis, focalPoint1, focalPoint2);
+
+  const parts: Object3DPart[] = [
+    part("lensBody", "scene3d.part.lensBody", lensMesh, new THREE.Vector3(0, 1, 0)),
+    part("opticsAxis", "scene3d.part.opticsAxis", axis, new THREE.Vector3(0, -1, 0)),
+    part("focalPoint", "scene3d.part.focalPoint", focalPoint1, new THREE.Vector3(-1, 0, 0)),
+  ];
+
+  return { group, parts };
+}
+
 // --- Physics: Optics Prism --------------------------------------------------
 function buildOpticsPrism() {
   const group = new THREE.Group();
@@ -462,6 +525,38 @@ function buildGears() {
   const parts: Object3DPart[] = [
     part("driverGear", "scene3d.part.driverGear", gear1, new THREE.Vector3(-1, 0, 0)),
     part("drivenGear", "scene3d.part.drivenGear", gear2, new THREE.Vector3(1, 1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Engineering: Hydraulic Piston -----------------------------------------
+function buildHydraulicPiston() {
+  const group = new THREE.Group();
+
+  const cylinderOuter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.4, 1.4, 32),
+    new THREE.MeshStandardMaterial({ color: 0x64748b, transparent: true, opacity: 0.6, roughness: 0.3 }),
+  );
+
+  const pistonShaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 1.2, 24),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.9, roughness: 0.1 }),
+  );
+  pistonShaft.position.set(0, 0.4, 0);
+
+  const fluid = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.38, 0.38, 0.6, 24),
+    new THREE.MeshStandardMaterial({ color: 0x0284c7, transparent: true, opacity: 0.7 }),
+  );
+  fluid.position.set(0, -0.4, 0);
+
+  group.add(cylinderOuter, pistonShaft, fluid);
+
+  const parts: Object3DPart[] = [
+    part("pistonCylinder", "scene3d.part.pistonCylinder", cylinderOuter, new THREE.Vector3(1, 0, 0)),
+    part("pistonShaft", "scene3d.part.pistonShaft", pistonShaft, new THREE.Vector3(0, 1, 0)),
+    part("hydraulicFluid", "scene3d.part.hydraulicFluid", fluid, new THREE.Vector3(0, -1, 0)),
   ];
 
   return { group, parts };
@@ -607,6 +702,13 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildPlantCell,
   },
   {
+    id: "leaf-cell",
+    subject: "biology",
+    nameKey: "scene3d.obj.leafCell",
+    noteKey: "scene3d.note.schematic",
+    build: buildLeafCell,
+  },
+  {
     id: "lungs",
     subject: "anatomy",
     nameKey: "scene3d.obj.lungs",
@@ -635,11 +737,25 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildOpticsPrism,
   },
   {
+    id: "convex-lens",
+    subject: "physics",
+    nameKey: "scene3d.obj.convexLens",
+    noteKey: "scene3d.note.schematic",
+    build: buildConvexLens,
+  },
+  {
     id: "gears",
     subject: "engineering",
     nameKey: "scene3d.obj.gears",
     noteKey: "scene3d.note.schematic",
     build: buildGears,
+  },
+  {
+    id: "hydraulic-piston",
+    subject: "engineering",
+    nameKey: "scene3d.obj.hydraulicPiston",
+    noteKey: "scene3d.note.schematic",
+    build: buildHydraulicPiston,
   },
   {
     id: "electric-motor",
