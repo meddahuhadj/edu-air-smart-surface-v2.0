@@ -483,304 +483,319 @@ export function AirDrawCanvas({ isSimulation, realFrame, homography, onStroke }:
     }
   };
 
+  const isLateral = palettePosition === "left" || palettePosition === "right";
+
   return (
     <div
       ref={wrapperRef}
-      className={`flex flex-col gap-3 rounded-2xl transition-all ${
-        isFullscreen ? "h-screen w-screen bg-[#071318] p-4 text-white" : ""
-      }`}
+      className={`flex gap-3 rounded-2xl transition-all ${
+        isLateral ? (palettePosition === "left" ? "flex-col lg:flex-row" : "flex-col lg:flex-row-reverse") : "flex-col"
+      } ${isFullscreen ? "h-screen w-screen bg-[#071318] p-4 text-white" : ""}`}
     >
-      {/* TNI Primary Toolbar */}
-      <div className="glass flex flex-wrap items-center justify-between gap-3 p-3">
-        {/* Tools */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(
-            [
-              { id: "pen", label: t("draw.tool.pen"), icon: "✏️" },
-              { id: "highlighter", label: t("draw.tool.highlighter"), icon: "🖍️" },
-              { id: "line", label: t("draw.tool.line"), icon: "📏" },
-              { id: "arrow", label: t("draw.tool.arrow"), icon: "➡️" },
-              { id: "rectangle", label: t("draw.tool.rectangle"), icon: "⬜" },
-              { id: "circle", label: t("draw.tool.circle"), icon: "⭕" },
-              { id: "erase", label: t("draw.erase"), icon: "🧹" },
-              { id: "laser", label: t("draw.tool.laser"), icon: "🔴" },
-            ] as const
-          ).map((item) => (
+      {/* Toolbars Container (lateral sidebar or top rows) */}
+      <div className={isLateral ? "flex flex-col gap-3 w-full lg:w-72 shrink-0 overflow-y-auto" : "flex flex-col gap-3 w-full"}>
+        {/* TNI Primary Toolbar */}
+        <div className={`glass flex ${isLateral ? "flex-col items-stretch" : "flex-wrap items-center justify-between"} gap-3 p-3`}>
+          {/* Tools */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(
+              [
+                { id: "pen", label: t("draw.tool.pen"), icon: "✏️" },
+                { id: "highlighter", label: t("draw.tool.highlighter"), icon: "🖍️" },
+                { id: "line", label: t("draw.tool.line"), icon: "📏" },
+                { id: "arrow", label: t("draw.tool.arrow"), icon: "➡️" },
+                { id: "rectangle", label: t("draw.tool.rectangle"), icon: "⬜" },
+                { id: "circle", label: t("draw.tool.circle"), icon: "⭕" },
+                { id: "erase", label: t("draw.erase"), icon: "🧹" },
+                { id: "laser", label: t("draw.tool.laser"), icon: "🔴" },
+              ] as const
+            ).map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setTool(item.id)}
+                className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                  tool === item.id
+                    ? "bg-[color:var(--edu-accent)] text-[#04141a] shadow-sm"
+                    : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/30"
+                }`}
+                title={item.label}
+              >
+                <span>{item.icon}</span>
+                <span className={isLateral ? "inline" : "hidden sm:inline"}>{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Board Background Selector */}
+          <div className={`flex items-center gap-1.5 ${isLateral ? "border-t pt-2" : "border-l pl-2"} border-[color:var(--edu-panel-border)]`}>
+            {(
+              [
+                { id: "whiteboard", label: t("draw.bg.white"), icon: "⬜" },
+                { id: "blackboard", label: t("draw.bg.black"), icon: "⬛" },
+                { id: "grid", label: t("draw.bg.grid"), icon: "📐" },
+                { id: "lines", label: t("draw.bg.lines"), icon: "📝" },
+              ] as const
+            ).map((bg) => (
+              <button
+                key={bg.id}
+                type="button"
+                onClick={() => setBackground(bg.id)}
+                className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition ${
+                  background === bg.id
+                    ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
+                    : "border border-transparent text-[color:var(--edu-text-dim)] hover:border-[color:var(--edu-panel-border)]"
+                }`}
+                title={bg.label}
+              >
+                <span>{bg.icon}</span>
+                <span className="hidden md:inline">{bg.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Math & Measurement Tools */}
+          <div className={`flex items-center flex-wrap gap-1.5 ${isLateral ? "border-t pt-2" : "border-l pl-2"} border-[color:var(--edu-panel-border)]`}>
             <button
-              key={item.id}
               type="button"
-              onClick={() => setTool(item.id)}
+              onClick={() => setShowRuler(!showRuler)}
               className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-                tool === item.id
-                  ? "bg-[color:var(--edu-accent)] text-[#04141a] shadow-sm"
-                  : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/30"
-              }`}
-              title={item.label}
-            >
-              <span>{item.icon}</span>
-              <span className="hidden sm:inline">{item.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Board Background Selector */}
-        <div className="flex items-center gap-1.5 border-l border-[color:var(--edu-panel-border)] pl-2">
-          {(
-            [
-              { id: "whiteboard", label: t("draw.bg.white"), icon: "⬜" },
-              { id: "blackboard", label: t("draw.bg.black"), icon: "⬛" },
-              { id: "grid", label: t("draw.bg.grid"), icon: "📐" },
-              { id: "lines", label: t("draw.bg.lines"), icon: "📝" },
-            ] as const
-          ).map((bg) => (
-            <button
-              key={bg.id}
-              type="button"
-              onClick={() => setBackground(bg.id)}
-              className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition ${
-                background === bg.id
+                showRuler
                   ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
-                  : "border border-transparent text-[color:var(--edu-text-dim)] hover:border-[color:var(--edu-panel-border)]"
+                  : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
               }`}
-              title={bg.label}
+              title="Règle graduée"
             >
-              <span>{bg.icon}</span>
-              <span className="hidden md:inline">{bg.label}</span>
+              <span>📏</span>
+              <span className={isLateral ? "inline" : "hidden md:inline"}>Règle</span>
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={() => setShowProtractor(!showProtractor)}
+              className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                showProtractor
+                  ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
+                  : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
+              }`}
+              title="Rapporteur 180°"
+            >
+              <span>📐</span>
+              <span className={isLateral ? "inline" : "hidden md:inline"}>Rapporteur</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const points: { x: number; y: number }[] = [];
+                for (let i = 0; i <= 100; i++) {
+                  const nx = i / 100;
+                  const x = (nx - 0.5) * 4 * Math.PI;
+                  const ny = 0.5 - Math.sin(x) * 0.25;
+                  points.push({ x: nx, y: ny });
+                }
+                const newStroke: Stroke = { tool: "pen", points, color, thickness, erase: false };
+                const pages = [...pagesRef.current];
+                pages[pageIndexRef.current] = [...pages[pageIndexRef.current], newStroke];
+                pagesRef.current = pages;
+                onStroke();
+                redraw();
+              }}
+              className="flex items-center gap-1 rounded-lg border border-purple-500/40 bg-purple-500/10 px-2.5 py-1.5 text-xs font-semibold text-purple-300 transition hover:bg-purple-500/20"
+              title="Tracer sin(x)"
+            >
+              <span>📈</span>
+              <span className={isLateral ? "inline" : "hidden md:inline"}>sin(x)</span>
+            </button>
+          </div>
+
+          {/* Fullscreen & Export & TNI Dock */}
+          <div className={`flex items-center justify-between gap-2 ${isLateral ? "border-t pt-2" : "border-l pl-2"} border-[color:var(--edu-panel-border)]`}>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={exportPng}
+                className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-good)]/40 bg-[color:var(--edu-good)]/10 px-2.5 py-1.5 text-xs font-semibold text-[color:var(--edu-good)] transition hover:bg-[color:var(--edu-good)]/20"
+                title={t("draw.export")}
+              >
+                <span>💾</span>
+                <span className="hidden sm:inline">{t("draw.export")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-panel-border)] px-2.5 py-1.5 text-xs font-semibold text-[color:var(--edu-text-dim)] transition hover:border-white/40"
+                title={t("draw.fullscreen")}
+              >
+                <span>{isFullscreen ? "🗗" : "⛶"}</span>
+                <span className="hidden sm:inline">{t("draw.fullscreen")}</span>
+              </button>
+            </div>
+
+            {/* TNI Lateral Dock Toggle */}
+            <div className="flex items-center gap-1 border-l border-[color:var(--edu-panel-border)] pl-2">
+              <span className="text-[10px] text-slate-400 font-bold uppercase hidden lg:inline">TNI:</span>
+              <button
+                type="button"
+                onClick={() => setPalettePosition("left")}
+                className={`rounded px-1.5 py-1 text-xs font-bold ${
+                  palettePosition === "left" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+                }`}
+                title="Ancrer la palette à gauche (idéal enseignant droitier face aux élèves)"
+              >
+                ◀ G
+              </button>
+              <button
+                type="button"
+                onClick={() => setPalettePosition("top")}
+                className={`rounded px-1.5 py-1 text-xs font-bold ${
+                  palettePosition === "top" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+                }`}
+                title="Ancrer la palette en haut"
+              >
+                ▲ H
+              </button>
+              <button
+                type="button"
+                onClick={() => setPalettePosition("right")}
+                className={`rounded px-1.5 py-1 text-xs font-bold ${
+                  palettePosition === "right" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
+                }`}
+                title="Ancrer la palette à droite (idéal enseignant gaucher)"
+              >
+                D ▶
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Math & Measurement Tools */}
-        <div className="flex items-center gap-1.5 border-l border-[color:var(--edu-panel-border)] pl-2">
-          <button
-            type="button"
-            onClick={() => setShowRuler(!showRuler)}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-              showRuler
-                ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
-                : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
-            }`}
-            title="Règle graduée"
-          >
-            <span>📏</span>
-            <span className="hidden md:inline">Règle</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowProtractor(!showProtractor)}
-            className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
-              showProtractor
-                ? "border border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
-                : "border border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)] hover:border-white/40"
-            }`}
-            title="Rapporteur 180°"
-          >
-            <span>📐</span>
-            <span className="hidden md:inline">Rapporteur</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const points: { x: number; y: number }[] = [];
-              for (let i = 0; i <= 100; i++) {
-                const nx = i / 100;
-                const x = (nx - 0.5) * 4 * Math.PI;
-                const ny = 0.5 - Math.sin(x) * 0.25;
-                points.push({ x: nx, y: ny });
-              }
-              const newStroke: Stroke = { tool: "pen", points, color, thickness, erase: false };
-              const pages = [...pagesRef.current];
-              pages[pageIndexRef.current] = [...pages[pageIndexRef.current], newStroke];
-              pagesRef.current = pages;
-              onStroke();
-              redraw();
-            }}
-            className="flex items-center gap-1 rounded-lg border border-purple-500/40 bg-purple-500/10 px-2.5 py-1.5 text-xs font-semibold text-purple-300 transition hover:bg-purple-500/20"
-            title="Tracer sin(x)"
-          >
-            <span>📈</span>
-            <span className="hidden md:inline">f(x)=sin(x)</span>
-          </button>
-        </div>
+        {/* Secondary Toolbar (Colors, Thickness, Undo/Redo, Pages) */}
+        <div className={`glass flex ${isLateral ? "flex-col items-stretch" : "flex-wrap items-center justify-between"} gap-3 p-2.5`}>
+          {/* Colors */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-[color:var(--edu-text-dim)]">{t("draw.color")}</span>
+            {COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => {
+                  setColor(c);
+                  if (tool === "erase" || tool === "laser") setTool("pen");
+                }}
+                className="h-6 w-6 rounded-full border-2 transition hover:scale-110"
+                style={{
+                  backgroundColor: c,
+                  borderColor: color === c && tool !== "erase" && tool !== "laser" ? "var(--edu-accent)" : "rgba(255,255,255,0.2)",
+                }}
+              />
+            ))}
+          </div>
 
-        {/* Fullscreen & Export */}
-        <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-2">
-          <button
-            type="button"
-            onClick={exportPng}
-            className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-good)]/40 bg-[color:var(--edu-good)]/10 px-2.5 py-1.5 text-xs font-semibold text-[color:var(--edu-good)] transition hover:bg-[color:var(--edu-good)]/20"
-            title={t("draw.export")}
-          >
-            <span>💾</span>
-            <span className="hidden sm:inline">{t("draw.export")}</span>
-          </button>
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            className="flex items-center gap-1 rounded-lg border border-[color:var(--edu-panel-border)] px-2.5 py-1.5 text-xs font-semibold text-[color:var(--edu-text-dim)] transition hover:border-white/40"
-            title={t("draw.fullscreen")}
-          >
-            <span>{isFullscreen ? "🗗" : "⛶"}</span>
-            <span className="hidden sm:inline">{t("draw.fullscreen")}</span>
-          </button>
+          {/* Thickness */}
+          <div className={`flex items-center gap-1.5 ${isLateral ? "border-t pt-2" : "border-l pl-2"} border-[color:var(--edu-panel-border)]`}>
+            <span className="text-xs text-[color:var(--edu-text-dim)]">{t("draw.thickness")}</span>
+            {THICKNESSES.map((th) => (
+              <button
+                key={th}
+                type="button"
+                onClick={() => setThickness(th)}
+                className={`flex h-6 w-6 items-center justify-center rounded border transition ${
+                  thickness === th
+                    ? "border-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10 text-[color:var(--edu-accent)]"
+                    : "border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)]"
+                }`}
+              >
+                <div
+                  className="rounded-full bg-current"
+                  style={{ width: Math.max(3, th * 1.5), height: Math.max(3, th * 1.5) }}
+                />
+              </button>
+            ))}
+          </div>
 
-          {/* TNI Lateral Dock Toggle */}
-          <div className="flex items-center gap-1 border-l border-[color:var(--edu-panel-border)] pl-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase hidden lg:inline">Ancrage TNI:</span>
+          {/* Page Navigation */}
+          <div className={`flex items-center gap-1.5 ${isLateral ? "border-t pt-2" : "border-l pl-2"} border-[color:var(--edu-panel-border)]`}>
             <button
               type="button"
-              onClick={() => setPalettePosition("left")}
-              className={`rounded px-1.5 py-1 text-xs font-bold ${
-                palettePosition === "left" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
-              }`}
-              title="Ancrer la palette à gauche (idéal enseignant droitier face aux élèves)"
+              onClick={prevPage}
+              disabled={pageIndex === 0}
+              className="rounded border border-[color:var(--edu-panel-border)] px-2 py-0.5 text-xs text-[color:var(--edu-text-dim)] disabled:opacity-40"
+              title={t("draw.page.prev")}
             >
-              ◀ G
+              ◀
+            </button>
+            <span className="hud-mono text-xs text-[color:var(--edu-text-dim)]">
+              {t("draw.page")} {pageIndex + 1}/{pageCount}
+            </span>
+            <button
+              type="button"
+              onClick={nextPage}
+              disabled={pageIndex === pageCount - 1}
+              className="rounded border border-[color:var(--edu-panel-border)] px-2 py-0.5 text-xs text-[color:var(--edu-text-dim)] disabled:opacity-40"
+              title={t("draw.page.next")}
+            >
+              ▶
             </button>
             <button
               type="button"
-              onClick={() => setPalettePosition("top")}
-              className={`rounded px-1.5 py-1 text-xs font-bold ${
-                palettePosition === "top" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
-              }`}
-              title="Ancrer la palette en haut"
+              onClick={addPage}
+              className="ml-1 rounded bg-[color:var(--edu-accent)]/15 px-2 py-0.5 text-xs font-bold text-[color:var(--edu-accent)] hover:bg-[color:var(--edu-accent)]/30"
+              title={t("draw.page.new")}
             >
-              ▲ H
+              +
+            </button>
+          </div>
+
+          {/* History actions */}
+          <div className={`flex items-center gap-1.5 flex-wrap ${isLateral ? "border-t pt-2" : ""}`}>
+            <button
+              type="button"
+              onClick={undo}
+              className="rounded-md border border-[color:var(--edu-panel-border)] px-2 py-1 text-xs text-[color:var(--edu-text-dim)] transition hover:border-white/30"
+            >
+              ↩ {t("draw.undo")}
             </button>
             <button
               type="button"
-              onClick={() => setPalettePosition("right")}
-              className={`rounded px-1.5 py-1 text-xs font-bold ${
-                palettePosition === "right" ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300"
-              }`}
-              title="Ancrer la palette à droite (idéal enseignant gaucher)"
+              onClick={redo}
+              className="rounded-md border border-[color:var(--edu-panel-border)] px-2 py-1 text-xs text-[color:var(--edu-text-dim)] transition hover:border-white/30"
             >
-              D ▶
+              ↪ {t("draw.redo")}
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded-md border border-[color:var(--edu-danger)]/50 px-2 py-1 text-xs font-semibold text-[color:var(--edu-danger)] transition hover:bg-[color:var(--edu-danger)]/10"
+            >
+              🗑️ {t("draw.clear")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setExplainToast(true);
+                window.setTimeout(() => setExplainToast(false), 2600);
+              }}
+              className="rounded-md border border-[color:var(--edu-accent-2)]/40 px-2 py-1 text-xs font-medium text-[color:var(--edu-accent-2)]"
+            >
+              💡 {t("draw.explain")}
             </button>
           </div>
         </div>
+
+        {explainToast && (
+          <div className="glass px-3 py-2 text-xs text-[color:var(--edu-text-dim)]">{t("draw.explain.soon")}</div>
+        )}
       </div>
-
-      {/* Secondary Toolbar (Colors, Thickness, Undo/Redo, Pages) */}
-      <div className="glass flex flex-wrap items-center justify-between gap-3 p-2.5">
-        {/* Colors */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[color:var(--edu-text-dim)]">{t("draw.color")}</span>
-          {COLORS.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => {
-                setColor(c);
-                if (tool === "erase" || tool === "laser") setTool("pen");
-              }}
-              className="h-6 w-6 rounded-full border-2 transition hover:scale-110"
-              style={{
-                backgroundColor: c,
-                borderColor: color === c && tool !== "erase" && tool !== "laser" ? "var(--edu-accent)" : "rgba(255,255,255,0.2)",
-              }}
-              aria-label={c}
-            />
-          ))}
-        </div>
-
-        {/* Thickness */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[color:var(--edu-text-dim)]">{t("draw.thickness")}</span>
-          {THICKNESSES.map((th, i) => (
-            <button
-              key={th}
-              type="button"
-              onClick={() => setThickness(th)}
-              className={`rounded-md border px-2.5 py-1 text-xs font-medium ${
-                thickness === th
-                  ? "border-[color:var(--edu-accent)] text-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/10"
-                  : "border-[color:var(--edu-panel-border)] text-[color:var(--edu-text-dim)]"
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-
-        {/* Multi-page controls */}
-        <div className="flex items-center gap-1.5 border-l border-r border-[color:var(--edu-panel-border)] px-3">
-          <button
-            type="button"
-            onClick={prevPage}
-            disabled={pageIndex === 0}
-            className="rounded border border-[color:var(--edu-panel-border)] px-2 py-0.5 text-xs text-[color:var(--edu-text-dim)] disabled:opacity-40"
-            title={t("draw.page.prev")}
-          >
-            ◀
-          </button>
-          <span className="font-mono text-xs font-semibold text-[color:var(--edu-accent)]">
-            {t("draw.page")} {pageIndex + 1} / {pageCount}
-          </span>
-          <button
-            type="button"
-            onClick={nextPage}
-            disabled={pageIndex === pageCount - 1}
-            className="rounded border border-[color:var(--edu-panel-border)] px-2 py-0.5 text-xs text-[color:var(--edu-text-dim)] disabled:opacity-40"
-            title={t("draw.page.next")}
-          >
-            ▶
-          </button>
-          <button
-            type="button"
-            onClick={addPage}
-            className="ml-1 rounded bg-[color:var(--edu-accent)]/15 px-2 py-0.5 text-xs font-bold text-[color:var(--edu-accent)] hover:bg-[color:var(--edu-accent)]/30"
-            title={t("draw.page.new")}
-          >
-            +
-          </button>
-        </div>
-
-        {/* History actions */}
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={undo}
-            className="rounded-md border border-[color:var(--edu-panel-border)] px-2.5 py-1 text-xs text-[color:var(--edu-text-dim)] transition hover:border-white/30"
-          >
-            ↩ {t("draw.undo")}
-          </button>
-          <button
-            type="button"
-            onClick={redo}
-            className="rounded-md border border-[color:var(--edu-panel-border)] px-2.5 py-1 text-xs text-[color:var(--edu-text-dim)] transition hover:border-white/30"
-          >
-            ↪ {t("draw.redo")}
-          </button>
-          <button
-            type="button"
-            onClick={clearAll}
-            className="rounded-md border border-[color:var(--edu-danger)]/50 px-2.5 py-1 text-xs font-semibold text-[color:var(--edu-danger)] transition hover:bg-[color:var(--edu-danger)]/10"
-          >
-            🗑️ {t("draw.clear")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setExplainToast(true);
-              window.setTimeout(() => setExplainToast(false), 2600);
-            }}
-            className="ml-auto rounded-md border border-[color:var(--edu-accent-2)]/40 px-2.5 py-1 text-xs font-medium text-[color:var(--edu-accent-2)]"
-          >
-            💡 {t("draw.explain")}
-          </button>
-        </div>
-      </div>
-
-      {explainToast && (
-        <div className="glass px-3 py-2 text-xs text-[color:var(--edu-text-dim)]">{t("draw.explain.soon")}</div>
-      )}
 
       {/* Main Board Container */}
       <div
         ref={containerRef}
         className={`glass relative w-full overflow-hidden rounded-xl border border-[color:var(--edu-panel-border)] shadow-2xl ${
-          isFullscreen ? "h-[calc(100vh-170px)]" : "h-[540px]"
+          isFullscreen
+            ? isLateral
+              ? "h-[calc(100vh-32px)] flex-1"
+              : "h-[calc(100vh-170px)]"
+            : isLateral
+              ? "min-h-[580px] flex-1"
+              : "h-[540px]"
         }`}
       >
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full cursor-crosshair" />

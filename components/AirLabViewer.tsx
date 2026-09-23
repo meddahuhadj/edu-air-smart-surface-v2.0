@@ -459,27 +459,194 @@ export function AirLabViewer({ onExperiment }: AirLabViewerProps) {
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[color:var(--edu-panel-border)] p-4 bg-white/[0.02]">
         {activeExp === "optics" && (
-          <div className="flex items-center gap-3">
-            <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.optics.angle")} ({incidentAngle}°):</label>
-            <input type="range" min={0} max={85} value={incidentAngle} onChange={(e) => setIncidentAngle(Number(e.target.value))} className="accent-[color:var(--edu-accent)]" />
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.optics.angle")} ({incidentAngle}°):</label>
+              <button
+                type="button"
+                onClick={() => setIncidentAngle((a) => Math.max(0, a - 5))}
+                className="h-7 w-7 rounded bg-white/10 font-bold text-xs hover:bg-white/20"
+              >
+                -
+              </button>
+              <input type="range" min={0} max={85} value={incidentAngle} onChange={(e) => setIncidentAngle(Number(e.target.value))} className="accent-[color:var(--edu-accent)]" />
+              <button
+                type="button"
+                onClick={() => setIncidentAngle((a) => Math.min(85, a + 5))}
+                className="h-7 w-7 rounded bg-white/10 font-bold text-xs hover:bg-white/20"
+              >
+                +
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-[color:var(--edu-panel-border)] pl-3">
+              <span className="text-xs text-[color:var(--edu-text-dim)]">Milieu 2 :</span>
+              {[
+                { label: t("lab.optics.water"), n: 1.33 },
+                { label: t("lab.optics.glass"), n: 1.5 },
+                { label: t("lab.optics.diamond"), n: 2.42 },
+              ].map((m) => (
+                <button
+                  key={m.n}
+                  type="button"
+                  onClick={() => setN2(m.n)}
+                  className={`rounded px-2.5 py-1 text-xs font-semibold ${
+                    n2 === m.n ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  {m.label} (n={m.n})
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeExp === "pendulum" && (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.pendulum.length")} ({length.toFixed(1)} m):</label>
+              <input
+                type="range"
+                min={0.5}
+                max={2.5}
+                step={0.1}
+                value={length}
+                onChange={(e) => setLength(Number(e.target.value))}
+                className="accent-[color:var(--edu-accent)]"
+              />
+            </div>
+            <div className="flex items-center gap-1.5 border-l border-[color:var(--edu-panel-border)] pl-3">
+              <span className="text-xs text-[color:var(--edu-text-dim)]">Planète :</span>
+              {[
+                { label: t("lab.pendulum.earth"), g: 9.81 },
+                { label: t("lab.pendulum.moon"), g: 1.62 },
+                { label: t("lab.pendulum.jupiter"), g: 24.79 },
+              ].map((p) => (
+                <button
+                  key={p.g}
+                  type="button"
+                  onClick={() => setGravity(p.g)}
+                  className={`rounded px-2.5 py-1 text-xs font-semibold ${
+                    gravity === p.g ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-slate-300 hover:bg-white/10"
+                  }`}
+                >
+                  {p.label} ({p.g})
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendulumRunning(!pendulumRunning)}
+              className="ml-auto rounded-lg border border-[color:var(--edu-panel-border)] px-3 py-1 text-xs font-bold text-white hover:bg-white/10"
+            >
+              {pendulumRunning ? "⏸ Pause" : "▶ Animer"}
+            </button>
+          </div>
+        )}
+
+        {activeExp === "titration" && (
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-xs text-[color:var(--edu-text-dim)]">Burette NaOH (0.1M) :</span>
+            <button
+              type="button"
+              onClick={() => setBaseAdded((v) => Math.min(50, v + 1))}
+              className="rounded-lg bg-pink-500/20 border border-pink-500/40 px-3 py-1.5 text-xs font-bold text-pink-300 hover:bg-pink-500/30"
+            >
+              + 1.0 mL NaOH
+            </button>
+            <button
+              type="button"
+              onClick={() => setBaseAdded((v) => Math.min(50, v + 5))}
+              className="rounded-lg bg-pink-500/20 border border-pink-500/40 px-3 py-1.5 text-xs font-bold text-pink-300 hover:bg-pink-500/30"
+            >
+              + 5.0 mL NaOH
+            </button>
+            <button
+              type="button"
+              onClick={() => setBaseAdded(0)}
+              className="rounded-lg border border-[color:var(--edu-panel-border)] px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10"
+            >
+              🔄 Rincer le bécher
+            </button>
+          </div>
+        )}
+
+        {activeExp === "circuit" && (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.circuit.voltage")} ({voltage} V):</label>
+              <input
+                type="range"
+                min={1}
+                max={24}
+                value={voltage}
+                onChange={(e) => setVoltage(Number(e.target.value))}
+                className="accent-[color:var(--edu-accent)]"
+              />
+            </div>
+            <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-3">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.circuit.resistance")} ({resistance} Ω):</label>
+              <input
+                type="range"
+                min={10}
+                max={500}
+                step={10}
+                value={resistance}
+                onChange={(e) => setResistance(Number(e.target.value))}
+                className="accent-[color:var(--edu-accent)]"
+              />
+            </div>
+          </div>
+        )}
+
+        {activeExp === "solar" && (
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.solar.sunAngle")} ({sunAngle}°):</label>
+              <input
+                type="range"
+                min={10}
+                max={90}
+                value={sunAngle}
+                onChange={(e) => setSunAngle(Number(e.target.value))}
+                className="accent-[color:var(--edu-accent)]"
+              />
+            </div>
+            <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-3">
+              <label className="text-xs text-[color:var(--edu-text-dim)]">{t("lab.solar.tilt")} ({panelTilt}°):</label>
+              <input
+                type="range"
+                min={0}
+                max={90}
+                value={panelTilt}
+                onChange={(e) => setPanelTilt(Number(e.target.value))}
+                className="accent-[color:var(--edu-accent)]"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setPanelTilt(90 - sunAngle)}
+              className="rounded-lg border border-yellow-500/40 bg-yellow-500/10 px-3 py-1 text-xs font-bold text-yellow-300 hover:bg-yellow-500/20"
+            >
+              ☀️ Inclinaison Optimale ({90 - sunAngle}°)
+            </button>
           </div>
         )}
 
         {activeExp === "lens" && (
-          <>
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
               <label className="text-xs text-[color:var(--edu-text-dim)]">Focale f ({focalLength} cm):</label>
               <input type="range" min={10} max={40} value={focalLength} onChange={(e) => setFocalLength(Number(e.target.value))} className="accent-[color:var(--edu-accent)]" />
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-3">
               <label className="text-xs text-[color:var(--edu-text-dim)]">Distance objet p ({objectDist} cm):</label>
               <input type="range" min={15} max={80} value={objectDist} onChange={(e) => setObjectDist(Number(e.target.value))} className="accent-[color:var(--edu-accent)]" />
             </div>
-          </>
+          </div>
         )}
 
         {activeExp === "archimedes" && (
-          <>
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-xs text-[color:var(--edu-text-dim)]">Matière objet:</span>
               {[
@@ -492,13 +659,13 @@ export function AirLabViewer({ onExperiment }: AirLabViewerProps) {
                   key={m.label}
                   type="button"
                   onClick={() => setRhoObject(m.rho)}
-                  className={`rounded px-2 py-1 text-xs ${rhoObject === m.rho ? "bg-white/20 font-bold text-white" : "text-[color:var(--edu-text-dim)]"}`}
+                  className={`rounded px-2.5 py-1 text-xs font-semibold ${rhoObject === m.rho ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-[color:var(--edu-text-dim)] hover:bg-white/10"}`}
                 >
                   {m.label}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 border-l border-[color:var(--edu-panel-border)] pl-3">
               <span className="text-xs text-[color:var(--edu-text-dim)]">Liquide:</span>
               {[
                 { label: "Eau", rho: 1000 },
@@ -509,13 +676,13 @@ export function AirLabViewer({ onExperiment }: AirLabViewerProps) {
                   key={l.label}
                   type="button"
                   onClick={() => setRhoLiquid(l.rho)}
-                  className={`rounded px-2 py-1 text-xs ${rhoLiquid === l.rho ? "bg-white/20 font-bold text-white" : "text-[color:var(--edu-text-dim)]"}`}
+                  className={`rounded px-2.5 py-1 text-xs font-semibold ${rhoLiquid === l.rho ? "bg-[color:var(--edu-accent)] text-black" : "bg-white/5 text-[color:var(--edu-text-dim)] hover:bg-white/10"}`}
                 >
                   {l.label}
                 </button>
               ))}
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

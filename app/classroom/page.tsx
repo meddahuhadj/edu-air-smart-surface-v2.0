@@ -50,6 +50,13 @@ function ClassroomInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMode]);
 
+  useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.body.classList.toggle("tni-mode", session.isTniMode);
+      window.dispatchEvent(new Event("tni-mode-change"));
+    }
+  }, [session.isTniMode]);
+
   const cameraStatus: "ready" | "unavailable" | "off" = session.isSimulation
     ? "off"
     : real.status === "tracking"
@@ -68,10 +75,22 @@ function ClassroomInner() {
   };
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <div className={`mx-auto flex flex-col gap-6 py-8 transition-all ${session.isTniMode ? "w-full max-w-[1920px] px-6" : "max-w-6xl px-4 sm:px-6"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-lg font-semibold">{t("nav.classroom")}</h1>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={session.toggleTniMode}
+            className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+              session.isTniMode
+                ? "border-[color:var(--edu-accent)] bg-[color:var(--edu-accent)] text-black shadow-lg"
+                : "border-[color:var(--edu-panel-border)] bg-white/5 text-slate-300 hover:bg-white/10"
+            }`}
+            title="Activer le mode grand écran interactif TNI 86 pouces"
+          >
+            📺 {session.isTniMode ? "TNI 86\" (Actif)" : "Mode TNI 86\""}
+          </button>
           <button
             type="button"
             onClick={() => setLessonModalOpen(true)}
@@ -115,6 +134,7 @@ function ClassroomInner() {
               gesture={hudGesture}
               cameraStatus={cameraStatus}
               calibrated={homography !== null}
+              isTniMode={session.isTniMode}
             />
             <CameraFeed videoRef={real.videoRef} visible={!session.isSimulation} />
           </div>

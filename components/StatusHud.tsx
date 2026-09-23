@@ -23,6 +23,7 @@ export interface StatusHudProps {
   gesture: GestureType;
   cameraStatus: CameraStatus;
   calibrated: boolean;
+  isTniMode?: boolean;
 }
 
 function Cell({ label, value, tone }: { label: string; value: string; tone?: "good" | "warn" | "danger" }) {
@@ -53,18 +54,23 @@ const CAMERA_TONE: Record<CameraStatus, "good" | "warn" | "danger"> = {
   off: "warn",
 };
 
-export function StatusHud({ trackingQuality, fps, gesture, cameraStatus, calibrated }: StatusHudProps) {
+export function StatusHud({ trackingQuality, fps, gesture, cameraStatus, calibrated, isTniMode }: StatusHudProps) {
   const { t } = useI18n();
   const pct = Math.round(trackingQuality * 100);
   const trackingTone = pct >= 70 ? "good" : pct >= 35 ? "warn" : "danger";
 
   return (
-    <div className="glass grid grid-cols-2 gap-4 p-4 sm:grid-cols-5" role="status" aria-live="off">
+    <div className={`glass grid grid-cols-2 gap-4 p-4 sm:grid-cols-3 md:grid-cols-6`} role="status" aria-live="off">
       <Cell label={t("status.camera")} value={t(CAMERA_LABEL[cameraStatus])} tone={CAMERA_TONE[cameraStatus]} />
       <Cell label={t("status.tracking")} value={`${pct}%`} tone={trackingTone} />
       <Cell label="FPS" value={String(fps)} tone={fps >= 15 ? "good" : "warn"} />
       <Cell label={t("status.gesture")} value={t(GESTURE_LABELS[gesture])} />
       <Cell label={t("status.calibration")} value={calibrated ? t("status.calibrated") : t("status.notCalibrated")} tone={calibrated ? "good" : "warn"} />
+      <Cell
+        label={t("status.surface")}
+        value={isTniMode ? t("status.surface.tni") : t("status.surface.desk")}
+        tone={isTniMode ? "good" : undefined}
+      />
     </div>
   );
 }

@@ -92,6 +92,22 @@ export function AirQuizView({ onAnswerSubmit }: AirQuizViewProps) {
   const [showResult, setShowResult] = useState(false);
   const [timer, setTimer] = useState(20);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isTniMode, setIsTniMode] = useState<boolean>(() => {
+    if (typeof document !== "undefined") {
+      return document.body.classList.contains("tni-mode");
+    }
+    return false;
+  });
+  const [blueScore, setBlueScore] = useState(0);
+  const [redScore, setRedScore] = useState(0);
+
+  useEffect(() => {
+    const handleTniChange = () => {
+      setIsTniMode(document.body.classList.contains("tni-mode"));
+    };
+    window.addEventListener("tni-mode-change", handleTniChange);
+    return () => window.removeEventListener("tni-mode-change", handleTniChange);
+  }, []);
 
   // New Question Form state
   const [newQText, setNewQText] = useState("");
@@ -313,7 +329,7 @@ export function AirQuizView({ onAnswerSubmit }: AirQuizViewProps) {
 
       {/* Answer Options Grid */}
       {/* TNI vs Standard Mode Switcher inside Quiz */}
-      <div className="flex items-center justify-between border-t border-b border-[color:var(--edu-panel-border)] py-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-b border-[color:var(--edu-panel-border)] py-2.5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold uppercase tracking-wider text-[color:var(--edu-accent)]">Mode Affichage :</span>
           <button
@@ -324,34 +340,79 @@ export function AirQuizView({ onAnswerSubmit }: AirQuizViewProps) {
                 window.dispatchEvent(new Event("tni-mode-change"));
               }
             }}
-            className="rounded-lg border border-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/20 px-3 py-1 text-xs font-bold text-[color:var(--edu-accent)]"
+            className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition ${
+              isTniMode
+                ? "border-[color:var(--edu-accent)] bg-[color:var(--edu-accent)] text-black shadow-md"
+                : "border-[color:var(--edu-accent)] bg-[color:var(--edu-accent)]/20 text-[color:var(--edu-accent)] hover:bg-[color:var(--edu-accent)]/30"
+            }`}
           >
-            📺 Basculer Vue 4 Quadrants TNI (86")
+            📺 {isTniMode ? "Vue 4 Quadrants Active (86\")" : "Basculer Vue 4 Quadrants TNI (86\")"}
           </button>
         </div>
-        <div className="flex items-center gap-3 text-xs text-white/70">
-          <span>👥 Équipe Bleue: <strong>12 pts</strong></span>
-          <span>·</span>
-          <span>👥 Équipe Rouge: <strong>14 pts</strong></span>
+
+        {/* Dual Team Competition Scoring */}
+        <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-500/10 px-2.5 py-1 text-blue-300">
+            <span>🔵 {t("quiz.teams.blue")}: <strong>{blueScore} pts</strong></span>
+            <button
+              type="button"
+              onClick={() => setBlueScore((s) => s + 1)}
+              className="ml-1 rounded bg-blue-500/30 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-blue-500/50"
+              title="Ajouter 1 point"
+            >
+              +1
+            </button>
+          </div>
+          <span className="text-white/40 font-bold">VS</span>
+          <div className="flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-red-300">
+            <span>🔴 {t("quiz.teams.red")}: <strong>{redScore} pts</strong></span>
+            <button
+              type="button"
+              onClick={() => setRedScore((s) => s + 1)}
+              className="ml-1 rounded bg-red-500/30 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-red-500/50"
+              title="Ajouter 1 point"
+            >
+              +1
+            </button>
+          </div>
+          {(blueScore > 0 || redScore > 0) && (
+            <button
+              type="button"
+              onClick={() => {
+                setBlueScore(0);
+                setRedScore(0);
+              }}
+              className="text-[10px] text-slate-400 underline hover:text-white"
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 
       {/* Answer Options Grid (Standard vs TNI 4-Quadrant) */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className={isTniMode ? "tni-quadrant-grid" : "grid grid-cols-1 gap-3 sm:grid-cols-2"}>
         {currentQ.options.map((optKey, idx) => {
           const letter = String.fromCharCode(65 + idx);
           const isSelected = selectedAnswer === idx;
           const isCorrect = idx === currentQ.correctIndex;
           const revealed = selectedAnswer !== null;
 
-          let btnStyle = "border-[color:var(--edu-panel-border)] hover:border-[color:var(--edu-accent)]/50 hover:bg-white/[0.04]";
+          let btnStyle = isTniMode
+            ? "tni-quadrant-btn hover:border-[color:var(--edu-accent)]"
+            : "flex items-center gap-4 rounded-2xl border p-6 text-left transition active:scale-95 border-[color:var(--edu-panel-border)] hover:border-[color:var(--edu-accent)]/50 hover:bg-white/[0.04] touch-target";
+
           if (revealed) {
             if (isCorrect) {
-              btnStyle = "border-[color:var(--edu-good)] bg-[color:var(--edu-good)]/20 text-[color:var(--edu-good)] shadow-[0_0_20px_rgba(74,222,128,0.3)]";
+              btnStyle += isTniMode
+                ? " !border-[color:var(--edu-good)] !bg-[color:var(--edu-good)]/25 !text-[color:var(--edu-good)] shadow-[0_0_35px_rgba(74,222,128,0.4)]"
+                : " border-[color:var(--edu-good)] bg-[color:var(--edu-good)]/20 text-[color:var(--edu-good)] shadow-[0_0_20px_rgba(74,222,128,0.3)]";
             } else if (isSelected) {
-              btnStyle = "border-[color:var(--edu-danger)] bg-[color:var(--edu-danger)]/20 text-[color:var(--edu-danger)]";
+              btnStyle += isTniMode
+                ? " !border-[color:var(--edu-danger)] !bg-[color:var(--edu-danger)]/25 !text-[color:var(--edu-danger)]"
+                : " border-[color:var(--edu-danger)] bg-[color:var(--edu-danger)]/20 text-[color:var(--edu-danger)]";
             } else {
-              btnStyle = "opacity-40 border-[color:var(--edu-panel-border)]";
+              btnStyle += " opacity-40";
             }
           }
 
@@ -361,13 +422,15 @@ export function AirQuizView({ onAnswerSubmit }: AirQuizViewProps) {
               type="button"
               disabled={revealed}
               onClick={() => handleSelectOption(idx)}
-              className={`flex items-center gap-4 rounded-2xl border p-6 text-left transition active:scale-95 ${btnStyle} touch-target`}
-              style={{ minHeight: "100px" }}
+              className={btnStyle}
+              style={{ minHeight: isTniMode ? undefined : "100px" }}
             >
-              <span className="hud-mono flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl font-bold">
+              <span className={`hud-mono ${isTniMode ? "text-3xl mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10" : "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl"} font-bold`}>
                 {letter}
               </span>
-              <span className="text-base sm:text-lg font-semibold leading-snug">{getLabel(optKey)}</span>
+              <span className={isTniMode ? "text-xl sm:text-2xl font-bold leading-normal" : "text-base sm:text-lg font-semibold leading-snug"}>
+                {getLabel(optKey)}
+              </span>
             </button>
           );
         })}
