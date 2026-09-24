@@ -636,6 +636,419 @@ function buildWindTurbine() {
   return { group, parts };
 }
 
+// --- Astronomy: Saturn & Rings ----------------------------------------------
+function buildSaturn() {
+  const group = new THREE.Group();
+  const globe = sphere(0.48, 0xe2c792, 32);
+  globe.rotation.z = THREE.MathUtils.degToRad(26.7);
+
+  const ringGeo = new THREE.RingGeometry(0.65, 1.05, 64);
+  const ringMat = new THREE.MeshStandardMaterial({
+    color: 0xcbb58b,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.75,
+    roughness: 0.5,
+  });
+  const rings = new THREE.Mesh(ringGeo, ringMat);
+  rings.rotation.x = Math.PI / 2 + THREE.MathUtils.degToRad(26.7);
+
+  const titan = sphere(0.1, 0xdfb56c);
+  titan.position.set(1.4, 0.2, 0.3);
+
+  group.add(globe, rings, titan);
+
+  const parts: Object3DPart[] = [
+    part("saturnGlobe", "scene3d.part.saturnGlobe", globe, new THREE.Vector3(-0.5, 0.5, 0)),
+    part("saturnRings", "scene3d.part.saturnRings", rings, new THREE.Vector3(0, 1, 0)),
+    part("titanMoon", "scene3d.part.titanMoon", titan, new THREE.Vector3(1, 0.5, 0.5)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Astronomy: Black Hole & Accretion Disk ----------------------------------
+function buildBlackHole() {
+  const group = new THREE.Group();
+
+  const eventHorizon = sphere(0.4, 0x0a0a0c, 32);
+  (eventHorizon.material as THREE.MeshStandardMaterial).roughness = 0.9;
+
+  const diskGeo = new THREE.TorusGeometry(0.75, 0.2, 16, 64);
+  const diskMat = new THREE.MeshStandardMaterial({
+    color: 0xff6600,
+    emissive: 0xff3300,
+    emissiveIntensity: 0.8,
+    roughness: 0.3,
+  });
+  const disk = new THREE.Mesh(diskGeo, diskMat);
+  disk.rotation.x = Math.PI / 2.3;
+
+  const jetsGroup = new THREE.Group();
+  const jet1 = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.02, 0.22, 1.2, 16),
+    new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x0284c7, emissiveIntensity: 0.9, transparent: true, opacity: 0.7 }),
+  );
+  jet1.position.set(0, 0.7, 0);
+  const jet2 = jet1.clone();
+  jet2.rotation.z = Math.PI;
+  jet2.position.set(0, -0.7, 0);
+  jetsGroup.add(jet1, jet2);
+
+  group.add(eventHorizon, disk, jetsGroup);
+
+  const parts: Object3DPart[] = [
+    part("eventHorizon", "scene3d.part.eventHorizon", eventHorizon, new THREE.Vector3(0, 0, 0.001)),
+    part("accretionDisk", "scene3d.part.accretionDisk", disk, new THREE.Vector3(1, 0.5, 0)),
+    part("plasmaJets", "scene3d.part.plasmaJets", jetsGroup, new THREE.Vector3(0, 1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Chemistry: Methane (CH4) ------------------------------------------------
+function buildMethaneMolecule() {
+  const group = new THREE.Group();
+  const carbonPos = new THREE.Vector3(0, 0, 0);
+  const carbon = sphere(0.38, 0x334155);
+  group.add(carbon);
+
+  const r = 0.85;
+  const hPositions = [
+    new THREE.Vector3(0, r, 0),
+    new THREE.Vector3(r * Math.sqrt(8 / 9), -r / 3, 0),
+    new THREE.Vector3(-r * Math.sqrt(2 / 9), -r / 3, r * Math.sqrt(2 / 3)),
+    new THREE.Vector3(-r * Math.sqrt(2 / 9), -r / 3, -r * Math.sqrt(2 / 3)),
+  ];
+
+  const hGroup = new THREE.Group();
+  const bondGroup = new THREE.Group();
+
+  hPositions.forEach((pos) => {
+    const hAtom = sphere(0.22, 0xf8fafc);
+    hAtom.position.copy(pos);
+    hGroup.add(hAtom);
+    bondGroup.add(bond(carbonPos, pos, 0.035, 0x94a3b8));
+  });
+
+  group.add(hGroup, bondGroup);
+
+  const parts: Object3DPart[] = [
+    part("carbon", "scene3d.part.carbon", carbon, new THREE.Vector3(0, -1, 0)),
+    part("hydrogens", "scene3d.part.hydrogen", hGroup, new THREE.Vector3(0, 1, 0)),
+    part("bonds", "scene3d.part.bonds", bondGroup, new THREE.Vector3(1, 0, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Chemistry: Carbon Dioxide (CO2) ----------------------------------------
+function buildCo2Molecule() {
+  const group = new THREE.Group();
+  const o1Pos = new THREE.Vector3(-0.95, 0, 0);
+  const o2Pos = new THREE.Vector3(0.95, 0, 0);
+
+  const carbon = sphere(0.36, 0x334155);
+  const o1 = sphere(0.32, 0xef4444); o1.position.copy(o1Pos);
+  const o2 = sphere(0.32, 0xef4444); o2.position.copy(o2Pos);
+
+  const oGroup = new THREE.Group();
+  oGroup.add(o1, o2);
+
+  const bondsGroup = new THREE.Group();
+  bondsGroup.add(
+    bond(new THREE.Vector3(-0.95, 0.07, 0), new THREE.Vector3(0, 0.07, 0), 0.03, 0x94a3b8),
+    bond(new THREE.Vector3(-0.95, -0.07, 0), new THREE.Vector3(0, -0.07, 0), 0.03, 0x94a3b8),
+    bond(new THREE.Vector3(0, 0.07, 0), new THREE.Vector3(0.95, 0.07, 0), 0.03, 0x94a3b8),
+    bond(new THREE.Vector3(0, -0.07, 0), new THREE.Vector3(0.95, -0.07, 0), 0.03, 0x94a3b8),
+  );
+
+  group.add(carbon, oGroup, bondsGroup);
+
+  const parts: Object3DPart[] = [
+    part("carbon", "scene3d.part.carbon", carbon, new THREE.Vector3(0, 1, 0)),
+    part("oxygens", "scene3d.part.oxygen", oGroup, new THREE.Vector3(1, 0, 0)),
+    part("doubleBonds", "scene3d.part.doubleBonds", bondsGroup, new THREE.Vector3(0, -1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Chemistry: NaCl Crystal Lattice ----------------------------------------
+function buildCrystalLattice() {
+  const group = new THREE.Group();
+  const naGroup = new THREE.Group();
+  const clGroup = new THREE.Group();
+  const bondsGroup = new THREE.Group();
+
+  const spacing = 0.55;
+  for (let x = -1; x <= 1; x++) {
+    for (let y = -1; y <= 1; y++) {
+      for (let z = -1; z <= 1; z++) {
+        const pos = new THREE.Vector3(x * spacing, y * spacing, z * spacing);
+        const isNa = (x + y + z) % 2 === 0;
+        if (isNa) {
+          const na = sphere(0.12, 0xa855f7);
+          na.position.copy(pos);
+          naGroup.add(na);
+        } else {
+          const cl = sphere(0.15, 0x22c55e);
+          cl.position.copy(pos);
+          clGroup.add(cl);
+        }
+      }
+    }
+  }
+
+  for (let x = -1; x <= 1; x++) {
+    for (let y = -1; y <= 1; y++) {
+      for (let z = -1; z <= 1; z++) {
+        const p1 = new THREE.Vector3(x * spacing, y * spacing, z * spacing);
+        if (x < 1) bondsGroup.add(bond(p1, new THREE.Vector3((x + 1) * spacing, y * spacing, z * spacing), 0.015, 0x64748b));
+        if (y < 1) bondsGroup.add(bond(p1, new THREE.Vector3(x * spacing, (y + 1) * spacing, z * spacing), 0.015, 0x64748b));
+        if (z < 1) bondsGroup.add(bond(p1, new THREE.Vector3(x * spacing, y * spacing, (z + 1) * spacing), 0.015, 0x64748b));
+      }
+    }
+  }
+
+  group.add(naGroup, clGroup, bondsGroup);
+
+  const parts: Object3DPart[] = [
+    part("naIons", "scene3d.part.naIons", naGroup, new THREE.Vector3(-1, 1, 0)),
+    part("clIons", "scene3d.part.clIons", clGroup, new THREE.Vector3(1, 1, 0)),
+    part("latticeGrid", "scene3d.part.latticeGrid", bondsGroup, new THREE.Vector3(0, -1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Anatomy: Human Eye -----------------------------------------------------
+function buildHumanEye() {
+  const group = new THREE.Group();
+
+  const sclera = sphere(0.65, 0xf8fafc, 32);
+  (sclera.material as THREE.MeshStandardMaterial).roughness = 0.2;
+
+  const irisPupilGroup = new THREE.Group();
+  const iris = new THREE.Mesh(
+    new THREE.RingGeometry(0.12, 0.3, 32),
+    new THREE.MeshStandardMaterial({ color: 0x2563eb, side: THREE.DoubleSide, roughness: 0.3 }),
+  );
+  iris.position.set(0, 0, 0.63);
+  const pupil = sphere(0.12, 0x0f172a, 24);
+  pupil.position.set(0, 0, 0.62);
+  irisPupilGroup.add(iris, pupil);
+
+  const lensEye = sphere(0.2, 0x38bdf8, 24);
+  lensEye.scale.set(1.2, 1.2, 0.5);
+  lensEye.position.set(0, 0, 0.42);
+  (lensEye.material as THREE.MeshStandardMaterial).transparent = true;
+  (lensEye.material as THREE.MeshStandardMaterial).opacity = 0.6;
+
+  const retina = sphere(0.6, 0xef4444, 24);
+  retina.scale.set(0.98, 0.98, 0.98);
+  retina.position.set(0, 0, -0.05);
+
+  const opticNerve = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.1, 0.12, 0.5, 16),
+    new THREE.MeshStandardMaterial({ color: 0xfbbf24, roughness: 0.5 }),
+  );
+  opticNerve.rotation.x = Math.PI / 2;
+  opticNerve.position.set(0, 0, -0.8);
+
+  group.add(sclera, irisPupilGroup, lensEye, retina, opticNerve);
+
+  const parts: Object3DPart[] = [
+    part("sclera", "scene3d.part.sclera", sclera, new THREE.Vector3(0, 1, 0)),
+    part("irisPupil", "scene3d.part.irisPupil", irisPupilGroup, new THREE.Vector3(0, 0, 1)),
+    part("lensEye", "scene3d.part.lensEye", lensEye, new THREE.Vector3(0, 0.5, 0.5)),
+    part("retina", "scene3d.part.retina", retina, new THREE.Vector3(0, -1, 0)),
+    part("opticNerve", "scene3d.part.opticNerve", opticNerve, new THREE.Vector3(0, 0, -1)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Biology: Animal Cell ---------------------------------------------------
+function buildAnimalCell() {
+  const group = new THREE.Group();
+
+  const membrane = sphere(0.7, 0xf472b6, 32);
+  (membrane.material as THREE.MeshStandardMaterial).transparent = true;
+  (membrane.material as THREE.MeshStandardMaterial).opacity = 0.35;
+
+  const nucleusGroup = new THREE.Group();
+  const nucleus = sphere(0.28, 0x8b5cf6, 24);
+  const nucleolus = sphere(0.1, 0x4c1d95, 16);
+  nucleolus.position.set(0.05, 0.05, 0.05);
+  nucleusGroup.add(nucleus, nucleolus);
+  nucleusGroup.position.set(-0.1, 0.1, 0);
+
+  const mitoGroup = new THREE.Group();
+  const m1 = sphere(0.12, 0xef4444, 16); m1.scale.set(1.5, 0.8, 0.8); m1.position.set(0.35, -0.2, 0.2);
+  const m2 = sphere(0.12, 0xef4444, 16); m2.scale.set(1.5, 0.8, 0.8); m2.position.set(-0.35, -0.2, -0.1);
+  mitoGroup.add(m1, m2);
+
+  const er = new THREE.Mesh(
+    new THREE.TorusGeometry(0.42, 0.05, 12, 24, Math.PI * 1.5),
+    new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.4 }),
+  );
+  er.position.set(-0.1, 0.1, 0);
+
+  group.add(membrane, nucleusGroup, mitoGroup, er);
+
+  const parts: Object3DPart[] = [
+    part("membrane", "scene3d.part.membrane", membrane, new THREE.Vector3(0, 0, 1)),
+    part("nucleus", "scene3d.part.nucleus", nucleusGroup, new THREE.Vector3(-1, 1, 0)),
+    part("mitochondria", "scene3d.part.mitochondria", mitoGroup, new THREE.Vector3(1, -1, 0)),
+    part("endoplasmic", "scene3d.part.endoplasmic", er, new THREE.Vector3(1, 1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Biology: Neuron --------------------------------------------------------
+function buildNeuron() {
+  const group = new THREE.Group();
+
+  const soma = sphere(0.32, 0xec4899, 24);
+  soma.position.set(-0.8, 0, 0);
+
+  const dendrites = new THREE.Group();
+  for (let i = 0; i < 5; i++) {
+    const angle = (i / 5) * Math.PI * 1.6 - Math.PI * 0.8;
+    const end = new THREE.Vector3(-0.8 + Math.cos(angle) * 0.5, Math.sin(angle) * 0.5, 0);
+    dendrites.add(bond(new THREE.Vector3(-0.8, 0, 0), end, 0.03, 0xf472b6));
+  }
+
+  const axon = bond(new THREE.Vector3(-0.8, 0, 0), new THREE.Vector3(1.1, 0, 0), 0.04, 0x3b82f6);
+
+  const myelinGroup = new THREE.Group();
+  for (let x = -0.3; x <= 0.8; x += 0.35) {
+    const sheath = sphere(0.09, 0xfde047, 16);
+    sheath.scale.set(1.8, 1, 1);
+    sheath.position.set(x, 0, 0);
+    myelinGroup.add(sheath);
+  }
+
+  group.add(soma, dendrites, axon, myelinGroup);
+
+  const parts: Object3DPart[] = [
+    part("soma", "scene3d.part.soma", soma, new THREE.Vector3(-1, 0, 0)),
+    part("dendrites", "scene3d.part.dendrites", dendrites, new THREE.Vector3(-1, 1, 0)),
+    part("axon", "scene3d.part.axon", axon, new THREE.Vector3(0, -1, 0)),
+    part("myelinSheath", "scene3d.part.myelinSheath", myelinGroup, new THREE.Vector3(1, 0, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Geology: Earth Internal Layers -----------------------------------------
+function buildEarthLayers() {
+  const group = new THREE.Group();
+
+  const crust = new THREE.Mesh(
+    new THREE.SphereGeometry(0.7, 32, 32, 0, Math.PI * 1.6),
+    new THREE.MeshStandardMaterial({ color: 0x15803d, roughness: 0.6, side: THREE.DoubleSide }),
+  );
+
+  const mantle = sphere(0.58, 0xd97706, 24);
+
+  const outerCore = sphere(0.38, 0xef4444, 24);
+
+  const innerCore = sphere(0.2, 0xfef08a, 24);
+  (innerCore.material as THREE.MeshStandardMaterial).emissive = new THREE.Color(0xfde047);
+  (innerCore.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.5;
+
+  group.add(crust, mantle, outerCore, innerCore);
+
+  const parts: Object3DPart[] = [
+    part("crust", "scene3d.part.crust", crust, new THREE.Vector3(0, 0, 1)),
+    part("mantle", "scene3d.part.mantle", mantle, new THREE.Vector3(-1, 1, 0)),
+    part("outerCore", "scene3d.part.outerCore", outerCore, new THREE.Vector3(1, 1, 0)),
+    part("innerCore", "scene3d.part.innerCore", innerCore, new THREE.Vector3(0, -1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Engineering: Photovoltaic Solar Panel ---------------------------------
+function buildSolarPanel() {
+  const group = new THREE.Group();
+
+  const panelBoard = new THREE.Mesh(
+    new THREE.BoxGeometry(1.6, 1.0, 0.06),
+    new THREE.MeshStandardMaterial({ color: 0x1e3a8a, roughness: 0.2, metalness: 0.5 }),
+  );
+  panelBoard.rotation.x = -Math.PI / 4;
+
+  const frameGroup = new THREE.Group();
+  const pole = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.06, 0.08, 1.0, 16),
+    new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.8 }),
+  );
+  pole.position.set(0, -0.5, -0.2);
+  frameGroup.add(pole);
+
+  const raysGroup = new THREE.Group();
+  for (let i = -2; i <= 2; i++) {
+    const ray = bond(new THREE.Vector3(i * 0.3, 1.2, 0.4), new THREE.Vector3(i * 0.25, 0.2, 0), 0.02, 0xfacc15);
+    raysGroup.add(ray);
+  }
+
+  const battery = new THREE.Mesh(
+    new THREE.BoxGeometry(0.4, 0.3, 0.3),
+    new THREE.MeshStandardMaterial({ color: 0x10b981, roughness: 0.4 }),
+  );
+  battery.position.set(0.6, -0.7, -0.1);
+
+  group.add(panelBoard, frameGroup, raysGroup, battery);
+
+  const parts: Object3DPart[] = [
+    part("pvGrid", "scene3d.part.pvGrid", panelBoard, new THREE.Vector3(0, 1, 0)),
+    part("frameStand", "scene3d.part.frameStand", frameGroup, new THREE.Vector3(-1, 0, 0)),
+    part("sunRays", "scene3d.part.sunRays", raysGroup, new THREE.Vector3(0, 1, 1)),
+    part("batteryUnit", "scene3d.part.batteryUnit", battery, new THREE.Vector3(1, -1, 0)),
+  ];
+
+  return { group, parts };
+}
+
+// --- Physics: Tesla Coil ----------------------------------------------------
+function buildTeslaCoil() {
+  const group = new THREE.Group();
+
+  const toroid = new THREE.Mesh(
+    new THREE.TorusGeometry(0.4, 0.12, 16, 32),
+    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.95, roughness: 0.1 }),
+  );
+  toroid.rotation.x = Math.PI / 2;
+  toroid.position.set(0, 0.75, 0);
+
+  const coil = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.18, 0.18, 1.0, 24),
+    new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.4 }),
+  );
+  coil.position.set(0, 0.15, 0);
+
+  const sparksGroup = new THREE.Group();
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2;
+    const spark = bond(new THREE.Vector3(Math.cos(a) * 0.4, 0.75, Math.sin(a) * 0.4), new THREE.Vector3(Math.cos(a) * 0.9, 0.9, Math.sin(a) * 0.9), 0.025, 0x38bdf8);
+    sparksGroup.add(spark);
+  }
+
+  group.add(toroid, coil, sparksGroup);
+
+  const parts: Object3DPart[] = [
+    part("toroid", "scene3d.part.toroid", toroid, new THREE.Vector3(0, 1, 0)),
+    part("secondaryCoil", "scene3d.part.secondaryCoil", coil, new THREE.Vector3(-1, 0, 0)),
+    part("sparkArcs", "scene3d.part.sparkArcs", sparksGroup, new THREE.Vector3(1, 1, 0)),
+  ];
+
+  return { group, parts };
+}
+
 // --- Math: regular solids -----------------------------------------------
 function buildSolid(geometry: THREE.BufferGeometry, color: number) {
   return () => {
@@ -660,6 +1073,20 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildSolarSystem,
   },
   {
+    id: "saturn",
+    subject: "astronomy",
+    nameKey: "scene3d.obj.saturn",
+    noteKey: "scene3d.note.schematic",
+    build: buildSaturn,
+  },
+  {
+    id: "black-hole",
+    subject: "astronomy",
+    nameKey: "scene3d.obj.blackHole",
+    noteKey: "scene3d.note.schematic",
+    build: buildBlackHole,
+  },
+  {
     id: "earth-moon",
     subject: "astronomy",
     nameKey: "scene3d.obj.earthMoon",
@@ -674,6 +1101,27 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildWaterMolecule,
   },
   {
+    id: "methane",
+    subject: "chemistry",
+    nameKey: "scene3d.obj.methane",
+    noteKey: "scene3d.note.schematic",
+    build: buildMethaneMolecule,
+  },
+  {
+    id: "carbon-dioxide",
+    subject: "chemistry",
+    nameKey: "scene3d.obj.co2",
+    noteKey: "scene3d.note.schematic",
+    build: buildCo2Molecule,
+  },
+  {
+    id: "crystal-lattice",
+    subject: "chemistry",
+    nameKey: "scene3d.obj.crystalLattice",
+    noteKey: "scene3d.note.schematic",
+    build: buildCrystalLattice,
+  },
+  {
     id: "dna",
     subject: "biology",
     nameKey: "scene3d.obj.dna",
@@ -681,18 +1129,18 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildDna,
   },
   {
-    id: "heart",
+    id: "animal-cell",
     subject: "biology",
-    nameKey: "scene3d.obj.heart",
+    nameKey: "scene3d.obj.animalCell",
     noteKey: "scene3d.note.schematic",
-    build: buildHeart,
+    build: buildAnimalCell,
   },
   {
-    id: "brain",
+    id: "neuron",
     subject: "biology",
-    nameKey: "scene3d.obj.brain",
+    nameKey: "scene3d.obj.neuron",
     noteKey: "scene3d.note.schematic",
-    build: buildBrain,
+    build: buildNeuron,
   },
   {
     id: "plant-cell",
@@ -709,6 +1157,27 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildLeafCell,
   },
   {
+    id: "heart",
+    subject: "anatomy",
+    nameKey: "scene3d.obj.heart",
+    noteKey: "scene3d.note.schematic",
+    build: buildHeart,
+  },
+  {
+    id: "brain",
+    subject: "anatomy",
+    nameKey: "scene3d.obj.brain",
+    noteKey: "scene3d.note.schematic",
+    build: buildBrain,
+  },
+  {
+    id: "human-eye",
+    subject: "anatomy",
+    nameKey: "scene3d.obj.humanEye",
+    noteKey: "scene3d.note.schematic",
+    build: buildHumanEye,
+  },
+  {
     id: "lungs",
     subject: "anatomy",
     nameKey: "scene3d.obj.lungs",
@@ -723,11 +1192,25 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildVolcano,
   },
   {
+    id: "earth-layers",
+    subject: "geology",
+    nameKey: "scene3d.obj.earthLayers",
+    noteKey: "scene3d.note.schematic",
+    build: buildEarthLayers,
+  },
+  {
     id: "bohr-atom",
     subject: "physics",
     nameKey: "scene3d.obj.bohrAtom",
     noteKey: "scene3d.note.schematic",
     build: buildBohrAtom,
+  },
+  {
+    id: "tesla-coil",
+    subject: "physics",
+    nameKey: "scene3d.obj.teslaCoil",
+    noteKey: "scene3d.note.schematic",
+    build: buildTeslaCoil,
   },
   {
     id: "optics-prism",
@@ -742,6 +1225,13 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     nameKey: "scene3d.obj.convexLens",
     noteKey: "scene3d.note.schematic",
     build: buildConvexLens,
+  },
+  {
+    id: "solar-panel",
+    subject: "engineering",
+    nameKey: "scene3d.obj.solarPanel",
+    noteKey: "scene3d.note.schematic",
+    build: buildSolarPanel,
   },
   {
     id: "gears",
@@ -786,10 +1276,32 @@ export const OBJECT_LIBRARY: Object3DDef[] = [
     build: buildSolid(new THREE.TetrahedronGeometry(1.1), 0xa78bfa),
   },
   {
+    id: "octahedron",
+    subject: "math",
+    nameKey: "scene3d.obj.octahedron",
+    noteKey: "scene3d.note.none",
+    build: buildSolid(new THREE.OctahedronGeometry(1.1), 0x8b5cf6),
+  },
+  {
+    id: "dodecahedron",
+    subject: "math",
+    nameKey: "scene3d.obj.dodecahedron",
+    noteKey: "scene3d.note.none",
+    build: buildSolid(new THREE.DodecahedronGeometry(1.0), 0xf43f5e),
+  },
+  {
     id: "icosahedron",
     subject: "math",
     nameKey: "scene3d.obj.icosahedron",
     noteKey: "scene3d.note.none",
     build: buildSolid(new THREE.IcosahedronGeometry(1.0), 0x4ade80),
   },
+  {
+    id: "torus-knot",
+    subject: "math",
+    nameKey: "scene3d.obj.torusKnot",
+    noteKey: "scene3d.note.none",
+    build: buildSolid(new THREE.TorusKnotGeometry(0.6, 0.18, 100, 16), 0x06b6d4),
+  },
 ];
+
